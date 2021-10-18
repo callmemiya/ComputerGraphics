@@ -1,0 +1,55 @@
+<HTML>
+<BODY>
+<canvas id="lab03" width="500" height="400">
+</canvas>
+<script>
+    function Line(context, x0, y0, x1, y1) {
+        var eps = 0;
+        var x = x0, y = y0;
+        var A = y1 - y0;
+        var B = x1 - x0;
+        var SignA = A/Math.abs(A);
+        var SignB = B/Math.abs(B);
+        if (Math.abs(A) < Math.abs(B)) {
+            var k = 2*A;
+            for (x = x0; x !== x1; x += SignB){
+                ctx.fillRect(x, y, 1, 1);
+                eps = eps + k;
+                if (Math.abs(eps) >= Math.abs(B)){
+                    y += SignA * 1;
+                    eps -= SignA * SignB * B * 2;
+                }
+            }
+        } else {
+            var k = 2*B;
+            for (y = y0; y !== y1; y += SignA){
+                ctx.fillRect(x, y, 1, 1);
+                eps = eps + k;
+                if (Math.abs(eps) >= Math.abs(A)){
+                    x += SignB * 1;
+                    eps -= SignA * SignB * A * 2;
+                }
+            }
+        }
+    }
+</script>
+<script>
+        var canvas = document.getElementById("lab03");
+        var ctx = canvas.getContext("2d");
+        var flag = 0;
+        canvas.addEventListener("click", function(event){
+            if (!flag) {
+                x0 = event.offsetX;
+                y0 = event.offsetY;
+                flag = 1;
+            } else {
+                x1 = event.offsetX;
+                y1 = event.offsetY;
+                Line(ctx, x0, y0, x1, y1);
+                flag = 0;
+            }
+        });
+
+</script>
+</BODY>
+</HTML>
