@@ -1,0 +1,80 @@
+<html>
+<body>
+<canvas id="lab05" width="900" height="400">
+</canvas>
+<script>
+
+    let canvas = document.getElementById('lab05');
+    let ctx = canvas.getContext('2d');
+
+    function drawBezierCurve(point1, point2, point3) {
+        var t = 0;
+        var inter = setInterval(function () {
+            var bezierPoint1 = findBezierPoint(point1, point2, t);
+            var bezierPoint2 = findBezierPoint(point2, point3, t);
+            var mainBezierPoint = findBezierPoint(bezierPoint1, bezierPoint2, t);
+
+            drawPoint(bezierPoint1, '#FDB813'); // Orange
+            drawPoint(bezierPoint2, '#FDB813'); // Orange
+            drawPoint(mainBezierPoint, '#458B00'); // Green
+            t = t + 0.005;
+            if (t > 1) {
+                clearInterval(inter);
+            }
+        }, 1);
+    }
+
+    function findBezierPoint(point1, point2, t) {
+        var x = (1 - t) * point1.x + t * point2.x;
+        var y = (1 - t) * point1.y + t * point2.y;
+
+        var newPoint = new Point(x, y);
+        return newPoint;
+    }
+
+    function drawPoint(point, color) {
+        var pointSize = 2;
+
+        ctx.fillStyle = color; // Green color
+
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, pointSize, 0, Math.PI * 2, true);
+        ctx.fill();
+    }
+
+    class Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    var firstPoint = null;
+    var secondPoint = null;
+    var thirdPoint = null;
+    var flag = 1;
+
+    canvas.addEventListener('click', function (e) {
+        if (flag == 1) {
+            firstPoint = new Point(e.offsetX, e.offsetY);
+            ctx.fillRect(firstPoint.x, firstPoint.y, 1, 1);
+            flag = 2;
+        } else if (flag == 2) {
+            secondPoint = new Point(e.offsetX, e.offsetY);
+            ctx.fillRect(secondPoint.x, secondPoint.y, 1, 1);
+            flag = 3
+        } else {
+            thirdPoint = new Point(e.offsetX, e.offsetY);
+            ctx.fillRect(thirdPoint.x, thirdPoint.y, 1, 1);
+        }
+
+        canvas.addEventListener("contextmenu", function () {
+            console.log("contextmenu");
+            drawBezierCurve(firstPoint, secondPoint, thirdPoint);
+        });
+    });
+
+
+</script>
+</body>
+</html>

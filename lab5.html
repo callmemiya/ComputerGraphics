@@ -1,0 +1,119 @@
+<html>
+
+<body>
+<canvas id='lab05' height='500' width='500'>
+</canvas>
+<h2 id="construct">Mark vertices (Right click to finish)</h2>
+
+<script>
+
+    let canvas = document.getElementById('lab05');
+    let ctx = canvas.getContext('2d');
+
+    class Point{
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    function draw_line(context, x0, y0, x1, y1) {
+        var eps = 0;
+        var x = x0, y = y0;
+        var A = y1 - y0;
+        var B = x1 - x0;
+        var SignA = A/Math.abs(A);
+        var SignB = B/Math.abs(B);
+        if (Math.abs(A) < Math.abs(B)) {
+            var k = 2*A;
+            for (x = x0; x !== x1; x += SignB){
+                ctx.fillRect(x, y, 1, 1);
+                eps = eps + k;
+                if (Math.abs(eps) >= Math.abs(B)){
+                    y += SignA * 1;
+                    eps -= SignA * SignB * B * 2;
+                }
+            }
+        } else {
+            var k = 2*B;
+            for (y = y0; y !== y1; y += SignA){
+                ctx.fillRect(x, y, 1, 1);
+                eps = eps + k;
+                if (Math.abs(eps) >= Math.abs(A)){
+                    x += SignB * 1;
+                    eps -= SignA * SignB * A * 2;
+                }
+            }
+        }
+    }
+
+    function fillPolygon(ctx, points) {
+        let maxy = points[0].y, miny = points[0].y;
+        for (let i = 1; i < points.length; i++) {
+            if (points[i].y > maxy)
+                maxy = points[i].y;
+            if (points[i].y < miny)
+                miny = points[i].y;
+        }
+
+        console.log(maxy, miny);
+        let yarray = [];
+        for (let i = 0; i < points.length; ++i) {
+            let hi = 0, lo = 0;
+            let p = 0;
+
+            if (i !== points.length - 1)
+                p = i + 1;
+
+            if (points[i].y > points[p].y) {
+                hi = i;
+                lo = p;
+            } else if (points[i].y < points[p].y) {
+                hi = p;
+                lo = i;
+            } else continue;
+
+            let k = (points[hi].y - points[lo].y) /
+                (points[hi].x - points[lo].x);
+
+            for (let j = points[lo].y; j < points[hi].y; ++j) {
+                if (typeof yarray[j] == "undefined") yarray[j] = [];
+                yarray[j].push((j - points[lo].y) / k + points[lo].x);
+            }
+        }
+
+        for (let y = miny; y < maxy; y++) {
+            let xarray = yarray[y].sort(function (a, b) {
+                return a - b;
+            });
+            for (let j = 0; j < xarray.length / 2; ++j) {
+                for (let k = xarray[j * 2]; k < xarray[j * 2 + 1]; k++) {
+                    ctx.fillRect(k, y, 1, 1);
+                }
+            }
+        }
+    }
+
+    let point_index = 0;
+    let points = [];
+    canvas.addEventListener('click', function (e) {
+        points[point_index] = new Point(e.offsetX, e.offsetY);
+        ctx.fillRect(e.offsetX, e.offsetY, 1, 1);
+        let f = point_index
+        if (point_index >= 1) {
+            draw_line(ctx, points[f - 1].x, points[f - 1].y, points[f].x, points[f].y)
+        }
+        point_index += 1;
+    });
+
+    canvas.addEventListener("contextmenu", function () {
+        console.log("contextmenu");
+        fillPolygon(ctx, points);
+        point_index = 0;
+        points = [];
+    });
+
+</script>
+
+</body>
+</html>
