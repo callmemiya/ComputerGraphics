@@ -1,0 +1,180 @@
+<HTML>
+<BODY bgcolor="black">
+<canvas id="lab09" width="1000" height="1000">
+</canvas>
+<input type="file" onchange="reading(this)">
+<script>
+
+    function Line(context, x0, y0, x1, y1) {
+        let eps = 0;
+        let x = x0, y = y0;
+        let A = y1 - y0;
+        let B = x1 - x0;
+        let SignA = A/Math.abs(A);
+        let SignB = B/Math.abs(B);
+        if (Math.abs(A) < Math.abs(B)) {
+            let k = 2*A;
+            for (x = x0; x !== x1; x += SignB){
+                ctx.fillRect(x, y, 1, 1);
+                eps = eps + k;
+                if (Math.abs(eps) >= Math.abs(B)){
+                    y += SignA;
+                    eps -= SignA * SignB * B * 2;
+                }
+            }
+        } else {
+            let k = 2*B;
+            for (y = y0; y !== y1; y += SignA){
+                ctx.fillRect(x, y, 1, 1);
+                eps = eps + k;
+                if (Math.abs(eps) >= Math.abs(A)){
+                    x += SignB;
+                    eps -= SignA * SignB * A * 2;
+                }
+            }
+        }
+    }
+
+    let inp;
+    function reading(input) {
+        let file = input.files[0];
+        let reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = function() {
+            inp = reader.result;
+            console.log(reader.result);
+        };
+        reader.onerror = function() {
+            console.log(reader.error);
+        };
+    }
+
+    function fillFigure(first, second, third, light_source){
+        let light = [light_source[0] - ((third[0] + second[0]) / 2 + first[0]) / 2, light_source[1] - ((third[1] + second[1]) / 2 + first[1]) / 2,
+            light_source[2] - ((third[2] + second[2]) / 2 + first[2]) / 2];
+        let normal = [(second[1] - first[1]) * (third[2] - first[2]) - (third[1] - first[1]) * (second[2] - first[2]),
+            (third[0] - first[0]) * (second[2] - first[2]) - (second[0] - first[0]) * (third[2] - first[2]),
+            (second[0] - first[0]) * (third[1] - first[1]) - (third[0] - first[0]) * (second[1] - first[1])];
+        ctx.fillStyle = '#330066';
+        Line(ctx, first[0], first[1], second[0], second[1]);
+        Line(ctx, first[0], first[1], third[0], third[1]);
+        Line(ctx, third[0], third[1], second[0], second[1]);
+        let len1 = light[0] * light[0] + light[1] * light[1] + light[2] * light[2];
+        let len2 = normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2];
+        let cos = (light[0] * normal[0] + light[1] * normal[1] + light[2] * normal[2])/Math.sqrt(len1 * len2);
+        ctx.fillStyle = `rgb(99,00,${204 * cos})`;
+        let points = [first, second, third];
+        let min_y = Math.floor(points[0][1]), max_y = Math.floor(points[0][1]);
+        for (let i = 0; i < points.length; ++i) {
+            if (Math.floor(points[i][1]) < min_y){
+                min_y = Math.floor(points[i][1]);
+            }
+            if (Math.floor(points[i][1]) > max_y){
+                max_y = Math.floor(points[i][1]);
+            }
+        }
+        let Y_s = [];
+        for (let i = min_y; i < max_y + 1; ++i) {
+            Y_s[i] = [];
+        }
+        for (let i = 0; i < points.length; ++i) {
+            let n = 0;
+            if (i !== points.length - 1)
+                n = i + 1;
+            let u = 0, d = 0;
+            if (Math.floor(points[i][1]) > Math.floor(points[n][1])) {
+                u = i;
+                d = n;
+            }
+            else if (Math.floor(points[i][1]) < Math.floor(points[n][1])) {
+                u = n;
+                d = i;
+            }
+            else continue;
+            let k = (points[u][1] - points[d][1]) / (points[u][0] - points[d][0]);
+            for (let j = points[d][1]; j < points[u][1]; ++j) {
+                Y_s[Math.floor(j)].push((j - points[d][1])/k + points[d][0]);
+            }
+        }
+        for (let y = min_y; y < max_y; ++y) {
+            let X_s = Y_s[y].sort(function (a, b) {
+                return a - b;
+            });
+            for (let j = 0; j < X_s.length / 2; ++j) {
+                for (let x = X_s[j * 2]; x < X_s[j * 2 + 1]; ++x) {
+                    ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1);
+                }
+            }
+        }
+    }
+
+    let canvas = document.getElementById("lab09");
+    let ctx = canvas.getContext("2d");
+    let light_source;
+    let flag = 0;
+    let nodes = [];
+    canvas.addEventListener("click", function(event){
+
+        if (flag == 0){
+            x0 = event.offsetX;
+            y0 = event.offsetY;
+            z0 = 300;
+            light_source = [x0, y0, z0];
+            let imageObj = new Image();
+            imageObj.onload = function() {
+                let pattern = ctx.createPattern(imageObj, 'repeat');
+
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0,0,600,600);
+                let centerX = x0;
+                let centerY = y0;
+                let radius = 50;
+
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+                ctx.fillStyle = pattern;
+                ctx.fill();
+            };
+            imageObj.src = 'sun.jpg';
+            flag = 1;
+            return;
+        }
+        if (flag == 1){
+            let lines = [];
+            let object = inp.split('\n');
+            for (let line of object){
+                if (line.includes("v")){
+                    nodes.push(line.substring(2).split(" "));
+                }
+                if (line.includes("f ")){
+                    lines = line.substring(2).split(" ");
+                    let i = lines[0] - 1;
+                    let first = [[nodes[i][0] * 5, nodes[i][1] * 5, nodes[i][2] * 5]];
+                    i = lines[1] - 1;
+                    let second = [[nodes[i][0] * 5, nodes[i][1] * 5, nodes[i][2] * 5]];
+                    i = lines[2] - 1;
+                    let third = [[nodes[i][0] * 5, nodes[i][1] * 5, nodes[i][2] * 5]];
+                    let fourth;
+                    if (lines.length == 4){
+                        i = lines[3] - 1
+                        fourth = [[nodes[i][0] * 5, nodes[i][1] * 5, nodes[i][2] * 5]]
+                    }
+                    first = [Math.round(first[0][0]) + 400, -Math.round(first[0][1]) + 300, Math.round(first[0][2]) + 100];
+                    second = [Math.round(second[0][0]) + 400, -Math.round(second[0][1]) + 300, Math.round(second[0][2]) + 100];
+                    third = [Math.round(third[0][0]) + 400, -Math.round(third[0][1]) + 300, Math.round(third[0][2]) + 100];
+                    if (lines.length == 4){
+                        fourth = [Math.round(fourth[0][0]) + 400, -Math.round(fourth[0][1]) + 300, Math.round(fourth[0][2]) + 400];
+                        fillFigure(first, second, fourth, light_source);
+                        fillFigure(first, third, fourth, light_source);
+                        fillFigure(second, third, fourth, light_source);
+                    }
+                    fillFigure(first, second, third, light_source);
+                    console.log(first, second, third, fourth);
+                }
+            }
+            flag = 2;
+        }
+    });
+</script>
+</BODY>
+</HTML>

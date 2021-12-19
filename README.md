@@ -26,3 +26,7 @@ Computer Graphics
 
 ## Лабораторная работа №8
 Построение 3d фигуры с освещенностью.
+
+## Лабораторная работа №9
+Построение 3d фигуры с освещенностью с помощью файла .obj
+![Picture](https://github.com/callmemiya/ComputerGraphics/blob/master/picture.png)
